@@ -1,0 +1,8 @@
+---
+class: Ze::Helper::Zplon
+module_setup_flavor_devel: 1
+plugins:
+  - Config::Basic
+  - Template
+  - Additional
+  - VC::Git
