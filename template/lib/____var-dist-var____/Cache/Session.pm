@@ -15,7 +15,7 @@ sub _new_instance {
             servers => $config->{servers},
             compress_threshold => 5000,
             ketama_points => 150, 
-            namespace => 'orebs', 
+            namespace => '[% appname %]s', 
         });
     my $self = $class->SUPER::new( cache => $cache );
     return $self;

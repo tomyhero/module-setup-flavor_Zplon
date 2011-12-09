@@ -57,6 +57,9 @@ BEGIN {
     $config->{cache} = {
         servers => ['127.0.0.1:' . $memcached_port  ],
     };
+    $config->{cache_session} = {
+        servers => ['127.0.0.1:' . $memcached_port  ],
+    };
 
     $CACHE_MEMCACHED = t::Proc::Guard->new(
         command => ['/usr/bin/env','memcached', '-p', $memcached_port]

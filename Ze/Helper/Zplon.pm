@@ -3821,7 +3821,7 @@ template: |
               servers => $config->{servers},
               compress_threshold => 5000,
               ketama_points => 150, 
-              namespace => 'oreb', 
+              namespace => '[% appname %]', 
           });
       my $self = $class->SUPER::new( cache => $cache );
       return $self;
@@ -4040,10 +4040,33 @@ template: |
   use strict;
   use warnings;
   use HTTP::Session;
-  use HTTP::Session::Store::Memcached;
   use HTTP::Session::State::Cookie;
   use [% dist %]::Cache::Session;
   use [% dist %]::Config;
+  
+  
+  
+  BEGIN {
+      no warnings;
+      use HTTP::Session::Store::Memcached;
+      *HTTP::Session::Store::Memcached::new = sub {
+          my $class = shift;
+          my %args = ref($_[0]) ? %{$_[0]} : @_;
+          # check required parameters
+          for (qw/memd/) {
+              Carp::croak "missing parameter $_" unless $args{$_};
+          }
+  
+      # XXX : skiped..
+      #
+      #    unless (ref $args{memd} && index(ref($args{memd}), 'Memcached') >= 0) {
+      #        Carp::croak "memd requires instance of Cache::Memcached::Fast or Cache::Memcached";
+      #    }
+  
+          bless {%args}, $class;
+      };
+  }
+  
   
   sub create {
       my $class = shift;
@@ -4321,7 +4344,7 @@ template: |
               servers => $config->{servers},
               compress_threshold => 5000,
               ketama_points => 150, 
-              namespace => 'orebs', 
+              namespace => '[% appname %]s', 
           });
       my $self = $class->SUPER::new( cache => $cache );
       return $self;
@@ -5248,67 +5271,6 @@ template: |
   extends 'Ze::WAF::Dispatcher::Router';
   EOC;
 ---
-file: lib/HTTP/Session/Store/Memcached.pm
-template: |
-  package HTTP::Session::Store::Memcached;
-  use strict;
-  use warnings;
-  use base qw/Class::Accessor::Fast/;
-  use Encode;
-  
-  __PACKAGE__->mk_ro_accessors(qw/memd expires/);
-  
-  sub new {
-      my $class = shift;
-      my %args = ref($_[0]) ? %{$_[0]} : @_;
-      # check required parameters
-      for (qw/memd/) {
-          Carp::croak "missing parameter $_" unless $args{$_};
-      }
-  
-  # XXX : skiped..
-  #
-  #    unless (ref $args{memd} && index(ref($args{memd}), 'Memcached') >= 0) {
-  #        Carp::croak "memd requires instance of Cache::Memcached::Fast or Cache::Memcached";
-  #    }
-  
-      bless {%args}, $class;
-  }
-  
-  sub _filter_sid($) {
-      my $session_id = shift;
-      $session_id = Encode::encode_utf8($session_id) if Encode::is_utf8($session_id);
-      if ($session_id =~ /[\x00-\x20\x7f-\xff]/ || length($session_id) > 250) {
-          die "detected memcached injection: $session_id";
-      }
-      return $session_id;
-  }
-  
-  sub select {
-      my ( $self, $session_id ) = @_;
-      my $data = $self->memd->get(_filter_sid $session_id);
-  }
-  
-  sub insert {
-      my ($self, $session_id, $data) = @_;
-      $self->memd->set( _filter_sid($session_id), $data, $self->expires );
-  }
-  
-  sub update {
-      my ($self, $session_id, $data) = @_;
-      $self->memd->replace( _filter_sid($session_id), $data, $self->expires );
-  }
-  
-  sub delete {
-      my ($self, $session_id) = @_;
-      $self->memd->delete( _filter_sid($session_id) );
-  }
-  
-  sub cleanup { Carp::croak "This storage doesn't support cleanup" }
-  
-  1;
-  __END__
----
 file: misc/____var-appname-var____.sql
 template: |
   create table member (
@@ -5362,6 +5324,21 @@ template: |+
       all_uses_ok( search_path => '[% module %]'); 
   }
 
+---
+file: t/Cache-Session.t
+template: |
+  use Test::More;
+  use t::Util;
+  
+  use [% module %]::Cache;
+  my $session = [% module %]::Cache::Session->instance();
+  
+  $session->set('a','b');
+  
+  is($session->get('a'),'b');;
+  
+  
+  done_testing();
 ---
 file: t/Data-Member.t
 template: |
@@ -5466,6 +5443,9 @@ template: |
   
       # XXX 強制上書き
       $config->{cache} = {
+          servers => ['127.0.0.1:' . $memcached_port  ],
+      };
+      $config->{cache_session} = {
           servers => ['127.0.0.1:' . $memcached_port  ],
       };
   
