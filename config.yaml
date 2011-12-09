@@ -6,3 +6,4 @@ plugins:
   - Template
   - Additional
   - VC::Git
+  - +Ze::_::Helpper::Zplon

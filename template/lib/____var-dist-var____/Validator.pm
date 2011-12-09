@@ -67,6 +67,11 @@ setting:
       url: 
         rule:
             - Net#url_loose
+      member_name:
+        rule:
+            - String#length:
+                max : 55
+                min : 1
       p: 
         rule: 
           - Number#uint

@@ -7,6 +7,7 @@ use [% dist %]::Home;
 use [% dist %]::Validator;
 use [% dist %]::Config;
 
+
 [% dist %]::Validator->instance(); # compile
 my $home = [% dist %]::Home->get;
 
@@ -24,7 +25,9 @@ if($middlewares){
 
 builder {
     enable 'Plack::Middleware::Static',
-        path => qr{^/static/}, root => $home->file('htdocs');
+        path => sub { s!^/static/!! }, 
+        root => $home->file('htdocs')
+    ;
 
     enable_if { $_[0]->{REMOTE_ADDR} eq '127.0.0.1' } 
     "Plack::Middleware::ReverseProxy";

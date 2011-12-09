@@ -2,5 +2,35 @@
 
 <h3>[% dist %]</h3>
 
-[% "[%" %] INCLUDE 'footer.inc' [% "%" %][% "]" %]
+
+<div id="container-member_status">Loading...</div>
+
+[% "[%" %] MACRO footer_content_block  BLOCK -[% "%" %][% "]" %]
+<script>
+
+        $.ajax({
+            type: "get",
+            url: "/api/me",
+            dataType:"json",
+            success: function(json){
+                $('#container-member_status').html( $('#tmpl_member_status').template(json) );
+            }
+        });
+
+
+</script>
+[% "[%" %] END -[% "%" %][% "]" %]
+
+<script type="text/html" id="tmpl_member_status">
+<% if ( is_login ) { %>
+<%= item.member_name %> (ログアウト)
+<% } else { %>
+ログインする
+<% } %>
+</script>
+
+
+[% "[%" %] INCLUDE 'footer.inc' WITH
+    footer_content = footer_content_block()
+[% "%" %][% "]" %]
 

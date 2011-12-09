@@ -21,6 +21,7 @@ use Ze::WAF::Request;
 
 our @EXPORT = qw(
 test_pc 
+test_api
 cleanup_database
 login
 GET HEAD PUT POST);
@@ -94,6 +95,14 @@ sub test_pc {
     );
 }
 
+sub test_api {
+    my $cb = shift;
+    test_psgi(
+        app => Plack::Util::load_psgi( [% dist %]::Home->get->file('etc/api.psgi') ),
+        client => $cb,
+    );
+}
+
 sub cleanup_database {
     Test::More::note("TRUNCATING DATABASE");
     my $conf = [% dist %]::Config->instance->get('database')->{'master'};
@@ -123,13 +132,11 @@ sub _get_tables {
 sub create_member {
     my %args = @_;
     $args{member_name} ||= '"<xmp>テスト';
-    $args{icon_url} ||= 'https://twimg0-a.akamaihd.net/profile_images/1376368804/__________2011-06-01_2.08.00__reasonably_small.png';
     require [% dist %]::Model::Member;
     my $member_obj = [% dist %]::Model::Member->new()->create( \%args );
     return $member_obj;
 }
 
-# sample
 sub login {
     my $member_obj = shift || create_member();
 

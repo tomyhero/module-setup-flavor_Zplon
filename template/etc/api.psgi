@@ -7,6 +7,7 @@ use [% dist %]::Home;
 use [% dist %]::Validator;
 use [% dist %]::Config;
 
+
 [% dist %]::Validator->instance(); # compile
 my $home = [% dist %]::Home->get;
 

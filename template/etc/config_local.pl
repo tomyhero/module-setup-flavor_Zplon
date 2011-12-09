@@ -1,4 +1,25 @@
 +{
+    debug => 1,
+    database => {
+        master => {
+            dsn => "dbi:mysql:[% dist | lower %]_local",
+            username => "dev_master",
+            password => "oreb",
+        },
+        slaves => [
+            {
+                dsn => "dbi:mysql:[% dist | lower %]_local",
+                username => "dev_slave",
+                password => "oreb",
+            }
+        ],
+    },
+    url => {
+        pc => 'http://localhost.dev:5000',
+    },
+    cookie_session => {
+        namespace => '[% dist | lower %]_session',
+    },
     middleware => {
         pc => [
             {
