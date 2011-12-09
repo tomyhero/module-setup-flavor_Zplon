@@ -143,7 +143,7 @@ template: |+
   DATABASE_NAME=[% dist | lower %]_${[% dist | upper %]_ENV}
   
   
-  if [ ! -f $HOME/bin/devel/setup.sh ]; then
+  if [ ! -f $APP_HOME/bin/devel/setup.sh ]; then
       echo 'you must excute this script from application home directory!! like a ./bin/devel/setup.sh'
       exit(0);
   fi
@@ -4362,10 +4362,14 @@ template: |
   package [% dist %]::Controller::Root;
   use Ze::Class;
   extends '[% dist %]::WAF::Controller';
+  use [% dist %]::ObjectDriver::DBI;
   
   sub index {
       my ($self,$c) = @_;
+      my $dbh = [% dist %]::ObjectDriver::DBI->driver->rw_handle;
   
+  
+      $c->stash->{db_status} = $dbh->ping;
   }
   
   EOC;
@@ -5742,7 +5746,16 @@ template: |+
   <h3>[% dist %]</h3>
   
   
-  <div id="container-member_status">Loading...</div>
+  <table>
+  <tr>
+      <th>DB</th>
+      <td>#[% db_status %]#[% IF db_status %]OK[% ELSE %]NG[% END %]</td>
+  </tr>
+  <tr>
+      <th>API</th>
+      <td><div id="container-member_status">Loading...</div></td>
+  </tr>
+  </table>
   
   [% "[%" %] MACRO footer_content_block  BLOCK -[% "%" %][% "]" %]
   <script>
@@ -5762,9 +5775,9 @@ template: |+
   
   <script type="text/html" id="tmpl_member_status">
   <% if ( is_login ) { %>
-  <%= item.member_name %> (ログアウト)
+  OK <%= item.member_name %>
   <% } else { %>
-  ログインする
+  OK
   <% } %>
   </script>
   

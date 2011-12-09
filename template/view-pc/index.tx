@@ -3,7 +3,16 @@
 <h3>[% dist %]</h3>
 
 
-<div id="container-member_status">Loading...</div>
+<table>
+<tr>
+    <th>DB</th>
+    <td>#[% db_status %]#[% IF db_status %]OK[% ELSE %]NG[% END %]</td>
+</tr>
+<tr>
+    <th>API</th>
+    <td><div id="container-member_status">Loading...</div></td>
+</tr>
+</table>
 
 [% "[%" %] MACRO footer_content_block  BLOCK -[% "%" %][% "]" %]
 <script>
@@ -23,9 +32,9 @@
 
 <script type="text/html" id="tmpl_member_status">
 <% if ( is_login ) { %>
-<%= item.member_name %> (ログアウト)
+OK <%= item.member_name %>
 <% } else { %>
-ログインする
+OK
 <% } %>
 </script>
 
