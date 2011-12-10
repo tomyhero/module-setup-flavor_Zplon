@@ -94,6 +94,7 @@ file: README
 template: |
   * 準備
   
+  - ./bin/devel/install.sh で依存モジュールをいれます。locallib等を利用したい場合は、ソースを手直しする必要があります。
   - [% dist | upper %]_ENV を指定してください。指定しない場合、後で述べますがsetup.sh で local を指定します。
   - [% dist | upper %]_ENVにlocal以外を指定した場合、etc/config_local.pl の ファイル名のlocal 部分を指定した名前に変更してください
   - mysqlを準備し、etc/config_local.pl 内の接続情報を更新(Databaseは作成しなくていいです)。
@@ -4373,9 +4374,6 @@ template: |
       $cache->set($time,'ok');
       $c->stash->{ok_cache} = $cache->get($time);
   
-      use Data::Dumper;
-      warn Dumper $c->stash;
-  
   }
   
   EOC;
@@ -5784,6 +5782,7 @@ template: |+
   
   <h4>準備</h4>
   <ul>
+  <li>./bin/devel/install.sh で依存モジュールをいれます。locallib等を利用したい場合は、ソースを手直しする必要があります。</li>
   <li>[% dist | upper %]_ENV を指定してください。指定しない場合、後で述べますがsetup.sh で local を指定します。</li>
   <li>[% dist | upper %]_ENVにlocal以外を指定した場合、etc/config_local.pl の ファイル名のlocal 部分を指定した名前に変更してください</li>
   <li>mysqlを準備し、etc/config_local.pl 内の接続情報を更新(Databaseは作成しなくていいです)。</li>
