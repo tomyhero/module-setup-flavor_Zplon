@@ -1,5 +1,6 @@
 #!/bin/bash
 
+set -e;
 
 APP_HOME='.'
 MYRC=$HOME/.`basename $SHELL`rc
@@ -8,7 +9,7 @@ DATABASE_NAME=[% dist | lower %]_${[% dist | upper %]_ENV}
 
 if [ ! -f $APP_HOME/bin/devel/setup.sh ]; then
     echo 'you must excute this script from application home directory!! like a ./bin/devel/setup.sh'
-    exit(0);
+    exit;
 fi
 
 
