@@ -90,6 +90,18 @@ template: |
   auto_include;
   WriteAll;
 ---
+file: README
+template: |
+  * 準備
+  
+  - [% dist | upper %]_ENV を指定してください。指定しない場合、後で述べますがsetup.sh で local を指定します。
+  - [% dist | upper %]_ENVにlocal以外を指定した場合、etc/config_local.pl の ファイル名のlocal 部分を指定した名前に変更してください
+  - mysqlを準備し、etc/config_local.pl 内の接続情報を更新(Databaseは作成しなくていいです)。
+  - memcachedサーバを準備し、etc/config_local.pl 内の設定をお更新
+  - ./bin/devel/setup.sh を実行し、環境変数設定と、データベース作成をおこなう
+  - prove -lr t を実行しテストが通るか確認する
+  - plackup etc/mix.psgi を実行しこのページが見えてるか確認してみる。
+---
 file: bin/filegenerator.pl
 template: |+
   #!/usr/bin/env perl
@@ -330,6 +342,7 @@ template: |+
 file: etc/config.pl
 template: |
   +{
+      debug => 1,
       middleware => {
           pc => [
               {
@@ -355,12 +368,20 @@ template: |
               },
           ],
       },
+      cookie_session => {
+          namespace => '[% dist | lower %]_session',
+      },
   };
 ---
 file: etc/config_local.pl
 template: |
   +{
-      debug => 1,
+      cache => {
+          servers => [ '127.0.0.1:11211' ],
+      },
+      cache_session => {
+          servers => [ '127.0.0.1:11211' ],
+      },
       database => {
           master => {
               dsn => "dbi:mysql:[% dist | lower %]_local",
@@ -373,37 +394,6 @@ template: |
                   username => "dev_slave",
                   password => "oreb",
               }
-          ],
-      },
-      url => {
-          pc => 'http://localhost.dev:5000',
-      },
-      cookie_session => {
-          namespace => '[% dist | lower %]_session',
-      },
-      middleware => {
-          pc => [
-              {
-                  name => 'StackTrace',
-              },
-  #            {
-  #                name => 'ServerStatus::Lite',
-  #                opts => {
-  #                    path => '/___server-status',
-  #                    allow => [ '127.0.0.1','10.0.0.0/8'],
-  #                    sc[% dist | lower %]oard => '/var/run/server',
-  #                },
-  #            },
-  #            {
-  #                name => "ErrorDocument",
-  #                opts => {
-  #                    500 => $home->file('htdocs-static/pc/doc/500.html'),
-  #                    502 => $home->file('htdocs-static/pc/doc/500.html')
-  #                },
-  #            },
-              {
-                  name => 'HTTPExceptions',
-              },
           ],
       },
   };
@@ -4363,13 +4353,29 @@ template: |
   use Ze::Class;
   extends '[% dist %]::WAF::Controller';
   use [% dist %]::ObjectDriver::DBI;
+  use [% dist %]::Cache;
   
   sub index {
       my ($self,$c) = @_;
-      my $dbh = [% dist %]::ObjectDriver::DBI->driver->rw_handle;
+  
+      eval {
+          my $dbh = [% dist %]::ObjectDriver::DBI->driver->rw_handle;
+          $c->stash->{ok_db} = $dbh->ping;
+      };
+      if($@){
+          $c->stash->{ok_db} = 0;
+      }
   
   
-      $c->stash->{db_status} = $dbh->ping;
+      my $cache =  [% dist %]::Cache->instance();
+  
+      my $time = time;
+      $cache->set($time,'ok');
+      $c->stash->{ok_cache} = $cache->get($time);
+  
+      use Data::Dumper;
+      warn Dumper $c->stash;
+  
   }
   
   EOC;
@@ -5339,12 +5345,27 @@ template: |
   use Test::More;
   use t::Util;
   
-  use [% module %]::Cache;
+  use [% module %]::Cache::Session;
   my $session = [% module %]::Cache::Session->instance();
   
   $session->set('a','b');
   
   is($session->get('a'),'b');;
+  
+  
+  done_testing();
+---
+file: t/Cache.t
+template: |
+  use Test::More;
+  use t::Util;
+  
+  use [% module %]::Cache;
+  my $cache = [% module %]::Cache->instance();
+  
+  $cache->set('a','b');
+  
+  is($cache->get('a'),'b');;
   
   
   done_testing();
@@ -5749,13 +5770,36 @@ template: |+
   <table>
   <tr>
       <th>DB</th>
-      <td>#[% db_status %]#[% IF db_status %]OK[% ELSE %]NG[% END %]</td>
+      <td>[% "[%" %] IF ok_db [% "%" %][% "]" %]OK[% "[%" %] ELSE [% "%" %][% "]" %]NG[% "[%" %] END [% "%" %][% "]" %]</td>
   </tr>
   <tr>
       <th>API</th>
       <td><div id="container-member_status">Loading...</div></td>
   </tr>
+  <tr>
+      <th>CACHE</th>
+      <td>[% "[%" %] IF ok_cache [% "%" %][% "]" %]OK[% "[%" %] ELSE [% "%" %][% "]" %]NG[% "[%" %] END [% "%" %][% "]" %]</td>
+  </tr>
   </table>
+  
+  <h4>準備</h4>
+  <ul>
+  <li>[% dist | upper %]_ENV を指定してください。指定しない場合、後で述べますがsetup.sh で local を指定します。</li>
+  <li>[% dist | upper %]_ENVにlocal以外を指定した場合、etc/config_local.pl の ファイル名のlocal 部分を指定した名前に変更してください</li>
+  <li>mysqlを準備し、etc/config_local.pl 内の接続情報を更新(Databaseは作成しなくていいです)。</li>
+  <li>memcachedサーバを準備し、etc/config_local.pl 内の設定をお更新</li>
+  <li>./bin/devel/setup.sh を実行し、環境変数設定と、データベース作成をおこなう</li>
+  <li>prove -lr t を実行しテストが通るか確認する</li>
+  <li>plackup etc/mix.psgi を実行しこのページが見えてるか確認してみる。</li>
+  </ul>
+  <p>
+  
+  
+  </p>
+  
+  
+  
+  
   
   [% "[%" %] MACRO footer_content_block  BLOCK -[% "%" %][% "]" %]
   <script>

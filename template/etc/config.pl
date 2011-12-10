@@ -1,4 +1,5 @@
 +{
+    debug => 1,
     middleware => {
         pc => [
             {
@@ -23,5 +24,8 @@
                 name => 'HTTPExceptions',
             },
         ],
+    },
+    cookie_session => {
+        namespace => '[% dist | lower %]_session',
     },
 };

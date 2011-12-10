@@ -1,7 +1,7 @@
 use Test::More;
 use t::Util;
 
-use [% module %]::Cache;
+use [% module %]::Cache::Session;
 my $session = [% module %]::Cache::Session->instance();
 
 $session->set('a','b');
