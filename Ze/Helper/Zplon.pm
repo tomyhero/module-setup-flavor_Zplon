@@ -73,6 +73,7 @@ template: |
       'Text::SimpleTable' => 0,
       'HTTP::Parser::XS' => 0,
       'FindBin::libs' => 0,
+      ' HTTP::Session' => 0,
   );
   
   
@@ -150,6 +151,7 @@ file: bin/devel/setup.sh
 template: |+
   #!/bin/bash
   
+  set -e;
   
   APP_HOME='.'
   MYRC=$HOME/.`basename $SHELL`rc
@@ -158,7 +160,7 @@ template: |+
   
   if [ ! -f $APP_HOME/bin/devel/setup.sh ]; then
       echo 'you must excute this script from application home directory!! like a ./bin/devel/setup.sh'
-      exit(0);
+      exit;
   fi
   
   
@@ -166,6 +168,7 @@ template: |+
   #* 環境変数
   if [ ! $[% dist | upper %]_ENV ];then
   echo "export [% dist | upper %]_ENV=local" >> $MYRC
+  export [% dist | upper %]_ENV=local
   source $MYRC
   fi
   
@@ -5249,7 +5252,7 @@ template: |
   use Try::Tiny;
   extends 'Ze::WAF::Controller';
   
-  sub EXCECUTE {
+  sub EXECUTE {
       my( $self, $c, $action ) = @_;
   
       try {

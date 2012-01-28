@@ -17,6 +17,7 @@ fi
 #* 環境変数
 if [ ! $[% dist | upper %]_ENV ];then
 echo "export [% dist | upper %]_ENV=local" >> $MYRC
+export [% dist | upper %]_ENV=local
 source $MYRC
 fi
 
